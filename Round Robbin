@@ -1,0 +1,208 @@
+class process :
+    def __init__(self):
+        self.name=''
+        self.arrival_time=0
+        self.burst_time=0
+        self.waiting_time=0
+        self.turnaround_time=0
+        self.io_condition=0
+        self.io_time=0
+        self.io_waiting=0
+        self.remaining_slice=0
+        self.waiting_return=0
+        self.original_io_time=0
+        self.time_check=0
+def reval_ready(process_list,clock_time,waiting_queue,ready_queue):
+    for i in range(len(process_list)):
+        if process_list[i].arrival_time==clock_time:
+            ready_queue.append(process_list[i])
+    for i in range(len(waiting_queue)):
+        if waiting_queue[i].waiting_return==clock_time:
+            ready_queue.append(waiting_queue[i])
+            waiting_queue.remove(waiting_queue[i])
+            break
+    
+    return ready_queue,waiting_queue
+
+
+def descard(ready_queue,process_list,clock_time):
+    for i in range(len(process_list)):
+        if process_list[i].name==ready_queue[0].name and process_list[i].arrival_time==ready_queue[0].arrival_time:
+            process_list[i].waiting_time=clock_time-(process_list[i].burst_time+process_list[i].arrival_time)
+            process_list[i].turnaround_time=clock_time-process_list[i].arrival_time
+
+    ready_queue.remove(ready_queue[0])
+    return ready_queue,process_list
+    
+    
+def main():
+
+    clock_time=0
+    
+    no_of_processes=int(input("How many processes you want to add : "))
+
+    time_slice=int(input('Enter Time Slice : '))
+
+    virtual_time_slice=time_slice
+    
+    process_list=[process() for i in range (no_of_processes)]
+
+    for i in range(0,no_of_processes):
+        
+        name=input('Enter name of '+ str(i+1) +' Process :')
+        arrival=eval(input('Arrival Time :'))
+        burst=eval(input('Burst Time :'))
+        io_condition=eval(input('will process go for the I/0 (1 Yes, 0 No):'))
+        if io_condition==1:
+            io_time=int(input('After how much time during execution will it go for I/O :'))
+            process_list[i].io_time=io_time
+            process_list[i].original_io_time=io_time
+            process_list[i].io_condition=1
+            io_waiting=eval(input('How much time will it spend in Waiting Queue :'))
+            process_list[i].io_waiting=io_waiting
+        process_list[i].name=name
+        process_list[i].arrival_time=arrival
+        process_list[i].burst_time=burst
+
+    for i in range(0,no_of_processes):  #sorting on arrival time bases
+        for j in range(0,no_of_processes-1):
+            if process_list[j].arrival_time > process_list[j+1].arrival_time:
+                process_list[j],process_list[j+1]=process_list[j+1],process_list[j]
+
+    ready_queue=[]
+    waiting_queue=[]
+
+    clock_time=process_list[0].arrival_time
+    for i in range(no_of_processes):
+        if process_list[i].arrival_time==clock_time:
+            ready_queue.append(process_list[i])
+    clock_time+=1
+    while len(ready_queue)!=0 or len(waiting_queue)!=0:
+        if len(ready_queue)==0:
+            while len(ready_queue)==0:
+                ready_queue,waiting_queue=reval_ready(process_list,clock_time,waiting_queue,ready_queue)
+                clock_time+=1
+                    
+                
+        if ready_queue[0].io_condition==0:
+            if ready_queue[0].burst_time<=time_slice:
+                check=0
+                while check<ready_queue[0].burst_time:
+                    ready_queue,waiting_queue=reval_ready(process_list,clock_time,waiting_queue,ready_queue)
+                    clock_time+=1
+                    check+=1
+                ready_queue,process_list=descard(ready_queue,process_list,clock_time)
+            elif ready_queue[0].burst_time>time_slice:
+                check=0
+                while check<time_slice:
+                    ready_queue,waiting_queue=reval_ready(process_list,clock_time,waiting_queue,ready_queue)
+                    clock_time+=1
+                    check+=1
+                temp=process()
+                temp.name=ready_queue[0].name
+                temp.arrival_time=ready_queue[0].arrival_time
+                temp.burst_time=ready_queue[0].burst_time
+                temp.burst_time-=time_slice
+                temp.original_io_time=ready_queue[0].original_io_time
+                ready_queue.append(temp)
+                ready_queue.remove(ready_queue[0])
+        elif ready_queue[0].io_condition==1:
+            if ready_queue[0].remaining_slice==0:
+                if ready_queue[0].io_time==time_slice:
+                    check=0
+                    while check<time_slice:
+                        if ready_queue[0].burst_time==check+1:
+                            ready_queue,process_list=descard(ready_queue,process_list,clock_time)
+                            check=0
+                            break
+                        else :
+                            ready_queue,waiting_queue=reval_ready(process_list,clock_time,waiting_queue,ready_queue)
+                            clock_time+=1
+                            check+=1
+                    if check!=0:
+                        temp=process()
+                        temp.name=ready_queue[0].name
+                        temp.arrival_time=ready_queue[0].arrival_time
+                        temp.burst_time=ready_queue[0].burst_time-time_slice
+                        temp.io_condition=1
+                        temp.io_time=ready_queue[0].original_io_time
+                        temp.original_io_time=ready_queue[0].original_io_time
+                        temp.io_waiting=ready_queue[0].io_waiting
+                        temp.waiting_return=clock_time+ready_queue[0].io_waiting-1
+                        waiting_queue.append(temp)
+                        ready_queue.remove(ready_queue[0])
+                        
+                elif ready_queue[0].io_time<time_slice:
+                    check=0
+                    while check<ready_queue[0].io_time:
+                        if ready_queue[0].burst_time==check+1:
+                            ready_queue,process_list=descard(ready_queue,process_list,clock_time)
+                            check=0
+                            break
+                        else :
+                            ready_queue,waiting_queue=reval_ready(process_list,clock_time,waiting_queue,ready_queue)
+                            clock_time+=1
+                            check+=1
+                    if check!=0:
+                        temp=process()
+                        temp.name=ready_queue[0].name
+                        temp.arrival_time=ready_queue[0].arrival_time
+                        temp.burst_time=ready_queue[0].burst_time-ready_queue[0].original_io_time
+                        temp.io_condition=1
+                        temp.io_time=ready_queue[0].original_io_time
+                        temp.original_io_time=ready_queue[0].original_io_time
+                        temp.io_waiting=ready_queue[0].io_waiting
+                        temp.waiting_return=clock_time+ready_queue[0].io_waiting-1
+                        temp.remaining_slice=time_slice-ready_queue[0].io_time
+                        waiting_queue.append(temp)
+                        ready_queue.remove(ready_queue[0])
+                        
+                elif ready_queue[0].io_time>time_slice:
+                    check=0
+                    while check<time_slice:
+                        if ready_queue[0].burst_time==check+1:
+                            ready_queue,process_list=descard(ready_queue,process_list,clock_time)
+                            check=0
+                            break
+                        else :
+                            ready_queue,waiting_queue=reval_ready(process_list,clock_time,waiting_queue,ready_queue)
+                            clock_time+=1
+                            check+=1
+                    if check!=0:
+                        temp=process()
+                        temp.name=ready_queue[0].name
+                        temp.arrival_time=ready_queue[0].arrival_time
+                        temp.burst_time=ready_queue[0].burst_time-ready_queue[0].io_time
+                        temp.io_condition=1
+                        temp.io_waiting=ready_queue[0].io_waiting
+                        temp.io_time=ready_queue[0].io_time-time_slice
+                        if ready_queue[0].time_check!=0:
+                            temp.time_check=0
+                            time_slice=virtual_time_slice
+                        ready_queue.append(temp)
+                        ready_queue.remove(ready_queue[0])
+            elif ready_queue[0].remaining_slice!=0:
+                time_slice=ready_queue[0].remaining_slice
+                ready_queue[0].remaining_slice=0
+                ready_queue[0].time_check=1
+
+    print( ' Name ',' Arrival Time ',' Burst Time ',' Waiting Time ',' TurnAround Time ')
+    for i in range(len(process_list)):
+        print( str(process_list[i].name).center(6),str(process_list[i].arrival_time).center(14),str(process_list[i].burst_time).center(12),str(process_list[i].waiting_time).center(14),str(process_list[i].turnaround_time).center(17))
+
+    avg_turn=0.0
+    avg_wait=0.0
+
+    for i in range(0,no_of_processes): 
+        avg_turn+=process_list[i].turnaround_time
+        avg_wait+=process_list[i].waiting_time
+
+
+    avg_turn=float(avg_turn)/float(no_of_processes)
+    avg_wait=float(avg_wait)/float(no_of_processes)
+    print ('avg_turn = ',avg_turn)
+    print ('avg_wait = ',avg_wait )
+
+            
+main()
+
