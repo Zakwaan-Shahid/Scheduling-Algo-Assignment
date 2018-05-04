@@ -1,0 +1,123 @@
+class process :
+    def __init__(self):
+        self.name=''
+        self.arrival_time=0
+        self.burst_time=0
+        self.waiting_time=0
+        self.turnaround_time=0
+
+    def set_arrival(self,atime):
+        self.arrival_time=atime
+
+    def set_burst(self,btime):
+        self.burst_time=btime
+
+    def set_name(self,name1):
+        self.name=name1
+
+    def set_waiting(self,wtime):
+        self.waiting_time=wtime
+
+    def set_turnaround(self,ttime):
+        self.turnaround_time=ttime
+
+    def get_name(self):
+        return self.name
+
+    def get_arrival(self):
+        return self.arrival_time
+
+    def get_waiting(self):
+        return self.waiting_time
+
+    def get_burst(self):
+        return self.burst_time
+    
+    def get_turnaround(self):
+        return self.turnaround_time
+
+
+def partial_sort(lst,start):
+    for i in range(start,len(lst)):
+        for j in range(start,len(lst)-1):
+            if lst[j].get_burst() > lst[j+1].get_burst():
+                lst[j],lst[j+1]=lst[j+1],lst[j]
+    return lst
+
+
+def main():
+
+    clock_time=0
+    
+    no_of_processes=input("How many processes you want to add : ")
+
+    process_list=[process() for i in range (no_of_processes)]
+
+    for n in range(0,no_of_processes):
+        
+        name=raw_input('Enter name of '+ str(n+1) +' Process :')
+        arrival=eval(raw_input('Arrival Time :'))
+        burst=eval(raw_input('Burst Time :'))
+        process_list[n].set_name(name)
+        process_list[n].set_arrival(arrival)
+        process_list[n].set_burst(burst)
+
+    for i in range(0,no_of_processes):  #sorting on arrival time bases
+        for j in range(0,no_of_processes-1):
+            if process_list[j].get_arrival() > process_list[j+1].get_arrival():
+                process_list[j],process_list[j+1]=process_list[j+1],process_list[j]
+            elif process_list[j].get_arrival() == process_list[j+1].get_arrival():
+                if process_list[j].get_burst() > process_list[j+1].get_burst():
+                    process_list[j],process_list[j+1]=process_list[j+1],process_list[j]
+
+    ready_queue=[]
+    ready_queue.append(process_list[0])
+    j=int(0)
+
+    clock2=0
+    i=1
+    while i<no_of_processes :
+        while i<no_of_processes and process_list[i].get_arrival()<(ready_queue[j].get_burst()+clock2):
+            ready_queue.append(process_list[i])
+            i+=1
+            
+        ready_queue=partial_sort(ready_queue,j+1)
+        clock2+=ready_queue[j].get_burst()
+        j+=1
+        
+
+    process_list=ready_queue
+    
+
+
+    for i in range(0,no_of_processes):  #execution demo and assigning waiting time and turnaround time
+        if process_list[i].get_arrival()>clock_time:
+            process_list[i].set_waiting(0)
+        else:
+            process_list[i].set_waiting(clock_time-process_list[i].get_arrival())
+
+        clock_time += process_list[i].get_burst()
+        process_list[i].set_turnaround(process_list[i].get_waiting()+process_list[i].get_burst())
+
+    avg_turn=0.0
+    avg_wait=0.0
+
+    for i in range(0,no_of_processes): 
+        avg_turn+=process_list[i].get_turnaround()
+        avg_wait+=process_list[i].get_waiting()
+
+
+    print ' Name ',' Arrival Time ',' Burst Time ',' Waiting Time ',' TurnAround Time '
+    for i in range(0,no_of_processes):
+        print str(process_list[i].get_name()).center(6),str(process_list[i].get_arrival()).center(14),str(process_list[i].get_burst()).center(12),str(process_list[i].get_waiting()).center(14),str(process_list[i].get_turnaround()).center(17)
+
+
+
+    avg_turn=float(avg_turn)/float(no_of_processes)
+    avg_wait=float(avg_wait)/float(no_of_processes)
+    print 'avg_turn = ',avg_turn
+    print 'avg_wait = ',avg_wait
+
+
+        
+main()
