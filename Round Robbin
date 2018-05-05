@@ -91,7 +91,7 @@ def main():
                     ready_queue,waiting_queue=reval_ready(process_list,clock_time,waiting_queue,ready_queue)
                     clock_time+=1
                     check+=1
-                ready_queue,process_list=descard(ready_queue,process_list,clock_time)
+                ready_queue,process_list=descard(ready_queue,process_list,clock_time-1)
             elif ready_queue[0].burst_time>time_slice:
                 check=0
                 while check<time_slice:
@@ -147,7 +147,7 @@ def main():
                         temp=process()
                         temp.name=ready_queue[0].name
                         temp.arrival_time=ready_queue[0].arrival_time
-                        temp.burst_time=ready_queue[0].burst_time-ready_queue[0].original_io_time
+                        temp.burst_time=ready_queue[0].burst_time-ready_queue[0].io_time
                         temp.io_condition=1
                         temp.io_time=ready_queue[0].original_io_time
                         temp.original_io_time=ready_queue[0].original_io_time
@@ -172,10 +172,11 @@ def main():
                         temp=process()
                         temp.name=ready_queue[0].name
                         temp.arrival_time=ready_queue[0].arrival_time
-                        temp.burst_time=ready_queue[0].burst_time-ready_queue[0].io_time
+                        temp.burst_time=ready_queue[0].burst_time-time_slice
                         temp.io_condition=1
                         temp.io_waiting=ready_queue[0].io_waiting
                         temp.io_time=ready_queue[0].io_time-time_slice
+                        temp.original_io_time=ready_queue[0].original_io_time
                         if ready_queue[0].time_check!=0:
                             temp.time_check=0
                             time_slice=virtual_time_slice
